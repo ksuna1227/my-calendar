@@ -1,0 +1,318 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>My Calendar</title>
+<style>
+:root{--bg:#f6f7f9;--panel:#fff;--text:#202124;--muted:#858991;--line:#e5e7eb}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:Pretendard,"Noto Sans KR",Arial,sans-serif}
+button,input,select,textarea{font:inherit}button{cursor:pointer}.app{max-width:1450px;margin:auto;padding:24px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:15px;margin-bottom:16px}.brand{font-size:24px;font-weight:900}
+.tabs{display:flex;background:#e9eaed;border-radius:12px;padding:4px}.tab{border:0;background:transparent;padding:9px 18px;border-radius:9px;font-weight:800;color:#666}.tab.active{background:#fff;color:#111;box-shadow:0 1px 5px #0001}
+.btn{border:1px solid var(--line);background:#fff;border-radius:9px;padding:9px 13px;font-weight:750}.primary{background:#222;color:#fff;border-color:#222}
+.nav{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;background:#fff;border:1px solid var(--line);border-radius:14px 14px 0 0;padding:13px 15px}
+.navleft{display:flex;gap:7px}.navright{justify-self:end}.icon{width:36px;height:36px;border:1px solid var(--line);background:#fff;border-radius:9px;font-size:18px}
+.selector{display:flex;gap:7px;align-items:center;justify-content:center}.selector select,.selector input{
+  border:2px solid #cfd3d9;
+  background:#fff !important;
+  color:#202124 !important;
+  -webkit-text-fill-color:#202124 !important;
+  color-scheme:light;
+  border-radius:9px;
+  padding:9px 12px;
+  font-weight:850;
+  font-size:15px;
+  min-height:42px
+}
+.selector select option{
+  background:#fff !important;
+  color:#202124 !important;
+  -webkit-text-fill-color:#202124 !important;
+}
+.view{display:none}.view.active{display:block}.shell{background:#fff;border:1px solid var(--line);border-top:0;border-radius:0 0 14px 14px;overflow:hidden}
+.weekdays,.month{display:grid;grid-template-columns:repeat(7,1fr)}.weekdays div{text-align:center;padding:10px;font-size:12px;font-weight:800;color:#888;border-bottom:1px solid var(--line)}
+.day{min-height:125px;padding:7px;border-right:1px solid var(--line);border-bottom:1px solid var(--line)}.day:nth-child(7n){border-right:0}.other{background:#fafafa;color:#bbb}
+.num{display:inline-flex;width:27px;height:27px;align-items:center;justify-content:center;border-radius:50%;font-size:13px;font-weight:800}.today .num{background:#222;color:#fff}
+.ev{margin-top:5px;padding:6px 7px;border-radius:6px;border-left:4px solid;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}.ev.done{text-decoration:line-through;opacity:.5}
+.weekwrap{overflow:auto}.weekly{display:grid;grid-template-columns:repeat(7,minmax(140px,1fr));min-width:980px;min-height:600px}
+.wcol{padding:13px;border-right:1px solid var(--line)}.wcol:last-child{border:0}.whead{text-align:center;font-size:12px;font-weight:850;border-bottom:1px solid var(--line);padding-bottom:12px;margin-bottom:9px}.whead b{display:block;font-size:20px;margin-top:4px}
+.check{display:flex;gap:7px;align-items:flex-start;padding:8px 5px;border-radius:7px;font-size:12px;cursor:pointer}.check:hover{background:#f5f5f5}.check.done .ct{text-decoration:line-through;opacity:.5}.dot{width:7px;height:7px;border-radius:50%;margin-top:5px;flex:none}.addday{width:100%;border:1px dashed #d5d8dd;background:none;border-radius:8px;padding:8px;color:#999;text-align:left;margin-top:5px}
+.timegrid{display:grid;grid-template-columns:85px 1fr;padding:15px}.tlabel,.tcell{height:68px;border-bottom:1px solid var(--line)}.tlabel{text-align:right;padding:7px 13px;color:#888;font-size:11px;border-right:1px solid var(--line)}.tcell{padding:5px 10px}.tev{height:100%;padding:7px 9px;border-radius:7px;border-left:5px solid;font-size:12px;cursor:pointer;overflow:hidden}
+.modalbg{display:none;position:fixed;inset:0;background:#0006;z-index:50;align-items:center;justify-content:center;padding:15px}.modalbg.open{display:flex}.modal{width:min(460px,100%);background:#fff;border-radius:17px;padding:22px;box-shadow:0 20px 70px #0004}.modal h2{margin:0 0 16px}.field{margin:11px 0}.field label{display:block;font-size:12px;font-weight:800;color:#666;margin-bottom:6px}.field input,.field textarea{width:100%;border:1px solid #dfe1e5;border-radius:8px;padding:10px}.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.colors{display:flex;gap:9px}.cp{width:27px;height:27px;border-radius:50%;border:3px solid white;box-shadow:0 0 0 1px #ccc}.cp.sel{box-shadow:0 0 0 2px #222}.ma{display:flex;justify-content:space-between;margin-top:18px}.danger{color:#b83232}
+.toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);background:#222;color:#fff;padding:10px 16px;border-radius:9px;font-size:13px;z-index:100;display:none}
+.toast.show{display:block}
+
+.authscreen{position:fixed;inset:0;background:#f6f7f9;z-index:200;display:flex;align-items:center;justify-content:center;padding:20px}
+.authscreen.hidden{display:none}
+.authbox{width:min(420px,100%);background:#fff;border:1px solid var(--line);border-radius:18px;padding:28px}
+.authbox h1{margin:0 0 7px;font-size:26px}.authbox p{margin:0 0 20px;color:#777;font-size:13px}
+.authbox input{width:100%;border:1px solid #dfe1e5;border-radius:9px;padding:12px;color:#202124;background:#fff;margin-bottom:10px}
+.authactions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px}
+.authmsg{min-height:20px;margin-top:12px;font-size:12px;color:#b83232}
+.userbar{display:none;align-items:center;gap:9px;font-size:12px;color:#666}.userbar.show{display:flex}
+.syncstate{font-size:11px;color:#888}
+@media(max-width:800px){.app{padding:9px}.top{flex-wrap:wrap}.tabs{order:3;width:100%}.tab{flex:1;padding:8px 4px;font-size:12px}.nav{grid-template-columns:auto 1fr auto}.selector{flex-wrap:wrap}.selector select{padding:7px 5px}.day{min-height:90px;padding:4px}.timegrid{grid-template-columns:60px 1fr;padding:6px}}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+<div class="authscreen" id="authscreen">
+  <div class="authbox">
+    <h1>My Calendar</h1>
+    <p>로그인하면 어느 컴퓨터에서든 같은 일정을 불러올 수 있습니다.</p>
+    <input id="authEmail" type="email" placeholder="이메일" autocomplete="email">
+    <input id="authPassword" type="password" placeholder="비밀번호 (6자 이상)" autocomplete="current-password">
+    <div class="authactions">
+      <button type="button" class="btn primary" id="loginBtn">로그인</button>
+      <button type="button" class="btn" id="signupBtn">회원가입</button>
+    </div>
+    <div class="authmsg" id="authmsg"></div>
+  </div>
+</div>
+<div class="app">
+<div class="top"><div class="brand">My Calendar</div><div class="tabs">
+<button class="tab active" data-view="month">Monthly</button><button class="tab" data-view="week">Weekly</button><button class="tab" data-view="time">Time Block</button>
+</div><div style="display:flex;align-items:center;gap:9px">
+<div class="userbar" id="userbar"><span id="userEmail"></span><span class="syncstate" id="syncstate"></span><button class="btn" id="logoutBtn">로그아웃</button></div>
+<button class="btn primary" id="newBtn">＋ 일정 추가</button>
+</div></div>
+<div class="nav">
+  <div class="navleft"><button class="icon" id="prev">‹</button><button class="icon" id="next">›</button></div>
+  <div class="selector">
+    <select id="headerYear" aria-label="연도 선택"></select>
+    <select id="headerMonth" aria-label="월 선택"></select>
+    <select id="headerWeek" aria-label="주차 선택" style="display:none"></select>
+    <input id="headerDate" aria-label="날짜 선택" type="date" style="display:none">
+  </div>
+  <div class="navright"><button class="btn" id="today">오늘</button></div>
+</div>
+<section class="view active shell" id="monthView"><div class="weekdays"><div>일</div><div>월</div><div>화</div><div>수</div><div>목</div><div>금</div><div>토</div></div><div class="month" id="monthGrid"></div></section>
+<section class="view shell" id="weekView"><div class="weekwrap"><div class="weekly" id="weekGrid"></div></div></section>
+<section class="view shell" id="timeView"><div class="timegrid" id="timeGrid"></div></section>
+</div>
+<div class="modalbg" id="modalbg"><div class="modal">
+<h2 id="mtitle">일정 추가</h2>
+<div class="field"><label>일정명</label><input id="title" autocomplete="off"></div>
+<div class="field"><label>날짜</label><input id="date" type="date"></div>
+<div class="row"><div class="field"><label>시작</label><input id="start" type="time"></div><div class="field"><label>종료</label><input id="end" type="time"></div></div>
+<div class="field"><label>메모</label><textarea id="memo" rows="3"></textarea></div>
+<div class="field"><label>색상</label><div class="colors" id="colors"></div></div>
+<div class="field"><label><input id="done" type="checkbox" style="width:auto"> 완료</label></div>
+<div class="ma"><button type="button" class="btn danger" id="deleteBtn">삭제</button><div><button type="button" class="btn" id="cancel">취소</button> <button type="button" class="btn primary" id="saveBtn">저장</button></div></div>
+</div></div>
+<div class="toast" id="toast"></div>
+<script>
+const $=q=>document.querySelector(q), $$=q=>[...document.querySelectorAll(q)];
+const pad=n=>String(n).padStart(2,'0'), dkey=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const fromKey=s=>{const [y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d)};
+const weekStart=d=>{const x=new Date(d);x.setDate(x.getDate()-x.getDay());x.setHours(0,0,0,0);return x};
+const esc=s=>(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const SUPABASE_URL='https://snqpbwijfupfhztvmjvw.supabase.co';
+const SUPABASE_KEY='sb_publishable_qQXDFJFBIf_XZ357KLd37g_zhU8u21r';
+const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
+const colors=['#6f8f72','#d18b70','#7c91c3','#b48bb8','#d2aa58','#6ca5a8'];
+let view='month', dates={month:new Date(),week:new Date(),time:new Date()}, editId=null, color=colors[0], currentUser=null;
+let data={month:[],week:[],time:[]};
+
+function setSync(t){$('#syncstate').textContent=t||''}
+async function loadCloud(){
+ if(!currentUser)return;
+ setSync('불러오는 중…');
+ const {data:rows,error}=await sb.from('calendar_events').select('*').order('event_date',{ascending:true}).order('start_time',{ascending:true});
+ if(error){setSync('불러오기 오류');toast('DB 설정을 확인해주세요.');console.error(error);return}
+ data={month:[],week:[],time:[]};
+ (rows||[]).forEach(r=>{
+   const e={id:r.id,title:r.title,date:r.event_date,start:r.start_time||'',end:r.end_time||'',memo:r.memo||'',color:r.color||colors[0],done:!!r.done};
+   if(data[r.view_type])data[r.view_type].push(e);
+ });
+ setSync('동기화됨');render();
+}
+async function cloudInsert(v,obj){
+ setSync('저장 중…');
+ const row={id:obj.id,user_id:currentUser.id,view_type:v,title:obj.title,event_date:obj.date,start_time:obj.start||null,end_time:obj.end||null,memo:obj.memo||'',color:obj.color,done:obj.done};
+ const {error}=await sb.from('calendar_events').insert(row);
+ if(error)throw error;setSync('동기화됨');
+}
+async function cloudUpdate(v,obj){
+ setSync('저장 중…');
+ const {error}=await sb.from('calendar_events').update({view_type:v,title:obj.title,event_date:obj.date,start_time:obj.start||null,end_time:obj.end||null,memo:obj.memo||'',color:obj.color,done:obj.done,updated_at:new Date().toISOString()}).eq('id',obj.id);
+ if(error)throw error;setSync('동기화됨');
+}
+async function cloudDelete(id){
+ setSync('삭제 중…');
+ const {error}=await sb.from('calendar_events').delete().eq('id',id);
+ if(error)throw error;setSync('동기화됨');
+}
+function persist(v){ /* cloud mode */ }
+function uid(){return crypto.randomUUID ? crypto.randomUUID() : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,c=>{const r=Math.random()*16|0,v=c==='x'?r:(r&3|8);return v.toString(16)})}
+function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1600)}
+function render(){
+ $$('.view').forEach(x=>x.classList.remove('active')); $(`#${view}View`).classList.add('active');
+ $$('.tab').forEach(x=>x.classList.toggle('active',x.dataset.view===view));
+ renderSelector(); if(view==='month')renderMonth();else if(view==='week')renderWeek();else renderTime();
+}
+function renderSelector(){
+ const d=dates[view];
+ const ySel=$('#headerYear'), mSel=$('#headerMonth'), wSel=$('#headerWeek'), dateInput=$('#headerDate');
+
+ ySel.style.display=view==='time'?'none':'inline-block';
+ mSel.style.display=view==='time'?'none':'inline-block';
+ wSel.style.display=view==='week'?'inline-block':'none';
+ dateInput.style.display=view==='time'?'inline-block':'none';
+
+ if(view==='time'){
+   dateInput.value=dkey(d);
+   return;
+ }
+
+ ySel.innerHTML='';
+ for(let y=d.getFullYear()-20;y<=d.getFullYear()+30;y++){
+   const o=document.createElement('option');o.value=String(y);o.textContent=`${y}년`;o.selected=y===d.getFullYear();ySel.appendChild(o);
+ }
+ mSel.innerHTML='';
+ for(let m=0;m<12;m++){
+   const o=document.createElement('option');o.value=String(m);o.textContent=`${m+1}월`;o.selected=m===d.getMonth();mSel.appendChild(o);
+ }
+
+ if(view==='week'){
+   const y=d.getFullYear(),m=d.getMonth(),first=new Date(y,m,1),last=new Date(y,m+1,0);
+   let w=weekStart(first),arr=[];
+   while(w<=last){arr.push(new Date(w));w=new Date(w);w.setDate(w.getDate()+7)}
+   const sw=weekStart(d);
+   let idx=arr.findIndex(x=>dkey(x)===dkey(sw));
+   if(idx<0){arr.push(new Date(sw));arr.sort((a,b)=>a-b);idx=arr.findIndex(x=>dkey(x)===dkey(sw))}
+   wSel.innerHTML='';
+   arr.forEach((x,i)=>{const o=document.createElement('option');o.value=dkey(x);o.textContent=`${i+1}주차`;o.selected=i===idx;wSel.appendChild(o)});
+ }
+}
+function renderMonth(){
+ const d=dates.month, first=new Date(d.getFullYear(),d.getMonth(),1), start=new Date(first);start.setDate(1-first.getDay());let h='';
+ for(let i=0;i<42;i++){let x=new Date(start);x.setDate(start.getDate()+i);let k=dkey(x), es=data.month.filter(e=>e.date===k).sort((a,b)=>(a.start||'').localeCompare(b.start||''));
+ h+=`<div class="day ${x.getMonth()!==d.getMonth()?'other':''} ${k===dkey(new Date())?'today':''}" data-date="${k}"><span class="num">${x.getDate()}</span>${es.map(e=>`<div class="ev ${e.done?'done':''}" data-event="${e.id}" style="background:${e.color}20;border-color:${e.color}">${e.start?e.start+' ':''}${esc(e.title)}</div>`).join('')}</div>`}
+ $('#monthGrid').innerHTML=h;
+}
+function renderWeek(){
+ let s=weekStart(dates.week),h='';
+ for(let i=0;i<7;i++){let d=new Date(s);d.setDate(s.getDate()+i);let k=dkey(d),es=data.week.filter(e=>e.date===k).sort((a,b)=>(a.start||'').localeCompare(b.start||''));
+ h+=`<div class="wcol"><div class="whead">${['일','월','화','수','목','금','토'][i]}<b>${d.getDate()}</b></div>${es.map(e=>`<div class="check ${e.done?'done':''}" data-event="${e.id}"><input class="wchk" data-check="${e.id}" type="checkbox" ${e.done?'checked':''}><span class="dot" style="background:${e.color}"></span><span class="ct">${e.start?e.start+' ':''}${esc(e.title)}</span></div>`).join('')}<button class="addday" data-add="${k}">＋ 일정 추가</button></div>`}
+ $('#weekGrid').innerHTML=h;
+}
+function renderTime(){
+ const k=dkey(dates.time);let h='';
+ for(let hr=0;hr<24;hr++){let es=data.time.filter(e=>e.date===k && +(e.start||'99').slice(0,2)===hr);
+ h+=`<div class="tlabel">${pad(hr)}:00</div><div class="tcell" data-date="${k}" data-hour="${hr}">${es.map(e=>`<div class="tev ${e.done?'done':''}" data-event="${e.id}" style="background:${e.color}20;border-color:${e.color}"><b>${esc(e.title)}</b> ${e.start||''}${e.end?'–'+e.end:''}</div>`).join('')}</div>`}
+ $('#timeGrid').innerHTML=h;
+}
+function paintColors(){$('#colors').innerHTML=colors.map(c=>`<button type="button" class="cp ${c===color?'sel':''}" data-color="${c}" style="background:${c}"></button>`).join('')}
+function openModal(id=null,date=null,hour=null){
+ editId=id?String(id):null;let e=editId?data[view].find(x=>String(x.id)===editId):null;
+ $('#mtitle').textContent=e?'일정 수정':'일정 추가';$('#title').value=e?.title||'';$('#date').value=e?.date||date||dkey(dates[view]);
+ $('#start').value=e?.start||(hour!==null?`${pad(hour)}:00`:'09:00');$('#end').value=e?.end||(hour!==null?`${pad(Math.min(hour+1,23))}:00`:'10:00');
+ $('#memo').value=e?.memo||'';$('#done').checked=!!e?.done;color=e?.color||colors[0];paintColors();$('#deleteBtn').style.display=e?'inline-block':'none';$('#modalbg').classList.add('open');
+}
+function closeModal(){$('#modalbg').classList.remove('open');editId=null}
+function eventClick(e){
+ const chk=e.target.closest('[data-check]');if(chk){e.stopPropagation();let x=data.week.find(a=>String(a.id)===String(chk.dataset.check));if(x){x.done=chk.checked;cloudUpdate('week',x).catch(err=>{console.error(err);toast('저장에 실패했습니다.');loadCloud()});renderWeek()}return}
+ const ev=e.target.closest('[data-event]');if(ev){openModal(ev.dataset.event);return}
+ const add=e.target.closest('[data-add]');if(add){openModal(null,add.dataset.add);return}
+ const cell=e.target.closest('[data-date]');if(cell)openModal(null,cell.dataset.date,cell.dataset.hour!==undefined?+cell.dataset.hour:null);
+}
+$('#monthGrid').addEventListener('click',eventClick);$('#weekGrid').addEventListener('click',eventClick);$('#timeGrid').addEventListener('click',eventClick);
+$('#colors').onclick=e=>{let b=e.target.closest('[data-color]');if(b){color=b.dataset.color;paintColors()}};
+$('#saveBtn').onclick=async()=>{
+ const title=$('#title').value.trim(),date=$('#date').value;
+ if(!title||!date){alert('일정명과 날짜를 입력해주세요.');return}
+ if(!currentUser){toast('로그인이 필요합니다.');return}
+ const wasEdit=editId!==null;
+ const obj={id:editId||uid(),title,date,start:$('#start').value,end:$('#end').value,memo:$('#memo').value.trim(),color,done:$('#done').checked};
+ try{
+   if(wasEdit){
+     const i=data[view].findIndex(x=>String(x.id)===String(editId));
+     if(i<0)throw new Error('일정을 찾을 수 없습니다.');
+     await cloudUpdate(view,obj);
+     data[view][i]=obj;
+   }else{
+     await cloudInsert(view,obj);
+     data[view].push(obj);
+   }
+   closeModal();render();toast(wasEdit?'일정이 수정되었습니다.':'일정이 저장되었습니다.');
+ }catch(err){console.error(err);setSync('저장 오류');toast('저장에 실패했습니다. DB 설정을 확인해주세요.')}
+};
+$('#deleteBtn').onclick=async(e)=>{
+ e.preventDefault();e.stopPropagation();
+ if(editId===null){toast('삭제할 일정을 찾지 못했습니다.');return}
+ const id=String(editId);
+ const before=data[view].length;
+ try{
+   await cloudDelete(id);
+   data[view]=data[view].filter(x=>String(x.id)!==id);
+   if(data[view].length===before)throw new Error('삭제 대상 없음');
+   editId=null;$('#modalbg').classList.remove('open');render();toast('일정이 삭제되었습니다.');
+ }catch(err){console.error(err);setSync('삭제 오류');toast('삭제에 실패했습니다.')}
+};
+$('#cancel').onclick=closeModal;$('#modalbg').onclick=e=>{if(e.target.id==='modalbg')closeModal()};
+$('#newBtn').onclick=()=>openModal();
+$$('.tab').forEach(b=>b.onclick=()=>{view=b.dataset.view;render()});
+$('#prev').onclick=()=>{let d=dates[view];if(view==='month')d.setMonth(d.getMonth()-1);else if(view==='week')d.setDate(d.getDate()-7);else d.setDate(d.getDate()-1);render()};
+$('#next').onclick=()=>{let d=dates[view];if(view==='month')d.setMonth(d.getMonth()+1);else if(view==='week')d.setDate(d.getDate()+7);else d.setDate(d.getDate()+1);render()};
+$('#today').onclick=()=>{dates[view]=new Date();render()};
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('#modalbg').classList.contains('open'))closeModal()});
+
+$('#headerYear').addEventListener('change',e=>{
+ const d=dates[view]; d.setFullYear(Number(e.target.value)); render();
+});
+$('#headerMonth').addEventListener('change',e=>{
+ const d=dates[view]; d.setMonth(Number(e.target.value)); render();
+});
+$('#headerWeek').addEventListener('change',e=>{
+ if(view==='week'&&e.target.value){dates.week=fromKey(e.target.value);render()}
+});
+$('#headerDate').addEventListener('change',e=>{
+ if(view==='time'&&e.target.value){dates.time=fromKey(e.target.value);render()}
+});
+
+async function showSession(session){
+ currentUser=session?.user||null;
+ if(currentUser){
+   $('#authscreen').classList.add('hidden');
+   $('#userbar').classList.add('show');
+   $('#userEmail').textContent=currentUser.email||'로그인됨';
+   await loadCloud();
+ }else{
+   data={month:[],week:[],time:[]};
+   $('#userbar').classList.remove('show');
+   $('#authscreen').classList.remove('hidden');
+   render();
+ }
+}
+$('#loginBtn').onclick=async()=>{
+ const email=$('#authEmail').value.trim(),password=$('#authPassword').value;
+ $('#authmsg').textContent='';
+ if(!email||!password){$('#authmsg').textContent='이메일과 비밀번호를 입력해주세요.';return}
+ $('#loginBtn').disabled=true;
+ const {data:res,error}=await sb.auth.signInWithPassword({email,password});
+ $('#loginBtn').disabled=false;
+ if(error){$('#authmsg').textContent='로그인 실패: '+error.message;return}
+ await showSession(res.session);
+};
+$('#signupBtn').onclick=async()=>{
+ const email=$('#authEmail').value.trim(),password=$('#authPassword').value;
+ $('#authmsg').textContent='';
+ if(!email||password.length<6){$('#authmsg').textContent='이메일과 6자 이상의 비밀번호를 입력해주세요.';return}
+ $('#signupBtn').disabled=true;
+ const {data:res,error}=await sb.auth.signUp({email,password});
+ $('#signupBtn').disabled=false;
+ if(error){$('#authmsg').textContent='회원가입 실패: '+error.message;return}
+ if(res.session){await showSession(res.session)}
+ else $('#authmsg').textContent='가입 확인 메일을 보냈습니다. 이메일 인증 후 로그인해주세요.';
+};
+$('#logoutBtn').onclick=async()=>{await sb.auth.signOut();await showSession(null)};
+sb.auth.onAuthStateChange((event,session)=>{
+ if(event==='SIGNED_OUT')showSession(null);
+});
+(async()=>{
+ const {data:{session}}=await sb.auth.getSession();
+ await showSession(session);
+})();
+</script>
+</body></html>
